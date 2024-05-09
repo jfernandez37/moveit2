@@ -61,7 +61,7 @@ void initMoveitPy(py::module& m)
 									     )")
 
       .def(py::init([](const std::string& node_name, const std::vector<std::string>& launch_params_filepaths,
-                       const py::object& config_dict, bool provide_planning_service) {
+                       const py::object& config_dict, bool provide_planning_service/*, std::string ns*/) {
              // This section is used to load the appropriate node parameters before spinning a moveit_cpp instance
              // Priority is given to parameters supplied directly via a config_dict, followed by launch parameters
              // and finally no supplied parameters.
@@ -106,7 +106,8 @@ void initMoveitPy(py::module& m)
                  .arguments(launch_arguments);
 
              RCLCPP_INFO(getLogger(), "Initialize node and executor");
-             rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(node_name, "", node_options);
+             std::string ns = "fanuc";
+             rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(node_name, ns, node_options);
              std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor =
                  std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
