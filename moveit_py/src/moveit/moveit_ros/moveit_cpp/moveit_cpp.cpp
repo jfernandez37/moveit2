@@ -61,7 +61,7 @@ void initMoveitPy(py::module& m)
 									     )")
 
       .def(py::init([](const std::string& node_name, const std::vector<std::string>& launch_params_filepaths,
-                       const py::object& config_dict, bool provide_planning_service/*, std::string ns*/) {
+                       const py::object& config_dict, bool provide_planning_service, const std::string namespace) {
              // This section is used to load the appropriate node parameters before spinning a moveit_cpp instance
              // Priority is given to parameters supplied directly via a config_dict, followed by launch parameters
              // and finally no supplied parameters.
@@ -106,8 +106,7 @@ void initMoveitPy(py::module& m)
                  .arguments(launch_arguments);
 
              RCLCPP_INFO(getLogger(), "Initialize node and executor");
-             std::string ns = "fanuc";
-             rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(node_name, ns, node_options);
+             rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared(node_name, namespace, node_options);
              std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor =
                  std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
@@ -138,6 +137,7 @@ void initMoveitPy(py::module& m)
            py::arg("launch_params_filepaths") =
                utils.attr("get_launch_params_filepaths")().cast<std::vector<std::string>>(),
            py::arg("config_dict") = py::none(), py::arg("provide_planning_service") = true,
+           py::arg("namespace") = "",
            py::return_value_policy::take_ownership,
            R"(
            Initialize moveit_cpp node and the planning scene service.
