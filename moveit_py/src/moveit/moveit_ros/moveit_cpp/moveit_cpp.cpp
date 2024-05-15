@@ -61,7 +61,7 @@ void initMoveitPy(py::module& m)
 									     )")
 
       .def(py::init([](const std::string& node_name, const std::vector<std::string>& launch_params_filepaths,
-                       const py::object& config_dict, bool provide_planning_service, const std::string& ns) {
+                       const py::object& config_dict, bool provide_planning_service, std::string ns) {
              // This section is used to load the appropriate node parameters before spinning a moveit_cpp instance
              // Priority is given to parameters supplied directly via a config_dict, followed by launch parameters
              // and finally no supplied parameters.
@@ -83,7 +83,14 @@ void initMoveitPy(py::module& m)
                  launch_arguments.push_back(launch_params_filepath);
                }
              }
+            //  launch_arguments.push_back("-r");
+            //  launch_arguments.push_back("/fanuc/joint_trajectory_controller/follow_joint_trajectory:=joint_trajectory_controller/follow_joint_trajectory");
 
+             std::cout << "launch arguments:" << std::endl;
+             for (int i = 0; i < launch_arguments.size(); i++){
+              std::cout << launch_arguments[i] << std::endl;
+             }
+             
              // Initialize ROS, pass launch arguments with rclcpp::init()
              if (!rclcpp::ok())
              {
@@ -93,6 +100,7 @@ void initMoveitPy(py::module& m)
                {
                  chars.push_back(arg.c_str());
                }
+               
 
                rclcpp::init(launch_arguments.size(), chars.data());
                RCLCPP_INFO(getLogger(), "Initialize rclcpp");
@@ -117,27 +125,26 @@ void initMoveitPy(py::module& m)
              };
              std::thread execution_thread(spin_node);
              execution_thread.detach();
+             
 
              auto custom_deleter = [executor](moveit_cpp::MoveItCpp* moveit_cpp) {
                executor->cancel();
                rclcpp::shutdown();
                delete moveit_cpp;
              };
-
              std::shared_ptr<moveit_cpp::MoveItCpp> moveit_cpp_ptr(new moveit_cpp::MoveItCpp(node), custom_deleter);
 
              if (provide_planning_service)
              {
                moveit_cpp_ptr->getPlanningSceneMonitorNonConst()->providePlanningSceneService();
              };
-
-             return moveit_cpp_ptr;
+            return moveit_cpp_ptr;
            }),
            py::arg("node_name") = "moveit_py",
            py::arg("launch_params_filepaths") =
                utils.attr("get_launch_params_filepaths")().cast<std::vector<std::string>>(),
            py::arg("config_dict") = py::none(), py::arg("provide_planning_service") = true,
-           py::arg("namespace") = "",
+           py::arg("ns") = "",
            py::return_value_policy::take_ownership,
            R"(
            Initialize moveit_cpp node and the planning scene service.
